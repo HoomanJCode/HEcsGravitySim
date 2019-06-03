@@ -5,11 +5,6 @@ using Unity.Entities;
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Collections;
-public struct WorldPlanetGroup
-{
-    public ComponentArray<Rigidbody> rig;
-    public readonly int Length;
-}
 public class GravitySystem : ComponentSystem
 {
     public const float gravity = 1;
@@ -21,14 +16,14 @@ public class GravitySystem : ComponentSystem
         //protect errors
         if (group.Length < 1) return;
         //data array creatation
-        anObject[] dataArr = new anObject[group.Length];
+        Planet[] dataArr = new Planet[group.Length];
         for (int i = 0; i < group.Length; i++)
         {
             dataArr[i].Pos = group.rig[i].position;
-            dataArr[i].mass = group.rig[i].mass* group.rig[i].transform.localScale.x;
+            dataArr[i].mass = group.rig[i].mass * group.rig[i].transform.localScale.x;
         }
 
-        var data = new NativeArray<anObject>(dataArr, Allocator.Persistent);
+        var data = new NativeArray<Planet>(dataArr, Allocator.Persistent);
         var results = new NativeArray<Vector3>(group.Length * group.Length, Allocator.Persistent);
         //create job
         var myjob = new ForceCalcJob()
@@ -49,7 +44,7 @@ public class GravitySystem : ComponentSystem
             group.rig[i % group.Length].AddForce(results[i], ForceMode.Acceleration);
         results.Dispose();
     }
-    public struct anObject
+    public struct Planet
     {
         public Vector3 Pos;
         public float mass;
@@ -58,7 +53,7 @@ public class GravitySystem : ComponentSystem
     public struct ForceCalcJob : IJobParallelFor
     {
         [ReadOnly]
-        public NativeArray<anObject> data;
+        public NativeArray<Planet> data;
         [ReadOnly]
         public float gravity;
         [WriteOnly]
@@ -67,7 +62,7 @@ public class GravitySystem : ComponentSystem
         public void Execute(int index)
         {
             for (int i = 0; i < data.Length; i++)
-                force2DResults[index * data.Length + i] =(i==index)? Vector3.zero:GetForce(index, i);
+                force2DResults[index * data.Length + i] = (i == index) ? Vector3.zero : GetForce(index, i);
         }
         private Vector3 direction;
         public Vector3 GetForce(int Object_A_Index, int Object_B_Index)
@@ -75,5 +70,10 @@ public class GravitySystem : ComponentSystem
             direction = data[Object_A_Index].Pos - data[Object_B_Index].Pos;
             return direction.normalized * (gravity * (data[Object_A_Index].mass * data[Object_B_Index].mass) / Mathf.Pow(direction.magnitude, 2));
         }
+    }
+    public struct WorldPlanetGroup
+    {
+        public ComponentArray<Rigidbody> rig;
+        public readonly int Length;
     }
 }

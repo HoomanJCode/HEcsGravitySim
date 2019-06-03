@@ -5,20 +5,20 @@ using UnityEngine;
 public class RandomGenerator : MonoBehaviour
 {
     [SerializeField]
-    Vector2 x, y, z, scale,mass;
+    private Vector2 x = Vector2.one, y = Vector2.one, z = Vector2.one, scale = Vector2.one, mass = Vector2.one;
     [SerializeField]
-    int HowMany = 100;
+    private int HowMany = 100;
     [SerializeField]
-    GameObject prefab;
-    Transform temp;
-    float tempScale;
+    private GameObject prefab=null;
+    private Transform temp;
+    private float tempScale;
     // Start is called before the first frame update
     void Start()
     {
         for (int i = 0; i < HowMany; i++)
         {
 
-            temp=Instantiate(prefab, new Vector3(Random.Range(x.x, x.y)
+            temp = Instantiate(prefab, new Vector3(Random.Range(x.x, x.y)
                                         , Random.Range(y.x, y.y)
                                         , Random.Range(z.x, z.y)), prefab.transform.rotation).transform;
             tempScale = Random.Range(scale.x, scale.y);
