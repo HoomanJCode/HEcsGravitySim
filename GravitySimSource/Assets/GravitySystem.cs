@@ -71,9 +71,9 @@ public class GravitySystem : ComponentSystem
             return direction.normalized * (gravity * (data[Object_A_Index].mass * data[Object_B_Index].mass) / Mathf.Pow(direction.magnitude, 2));
         }
     }
-    public struct WorldPlanetGroup
-    {
-        public ComponentArray<Rigidbody> rig;
-        public readonly int Length;
-    }
+}
+public struct WorldPlanetGroup
+{
+    public ComponentArray<Rigidbody> rig;
+    public readonly int Length;
 }
