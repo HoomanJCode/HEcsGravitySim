@@ -8,23 +8,27 @@ using Unity.Collections;
 public class GravitySystem : ComponentSystem
 {
     public const float gravity = 1;
-    [Inject]
-    public WorldPlanetGroup group;
     JobHandle jobhandle;
+    EntityQuery WorldPlanets;
+    int WorldPlanetsLen;
+    Rigidbody[] PlanetsRigidbody;
     protected override void OnUpdate()
     {
+        WorldPlanets =GetEntityQuery(typeof(Rigidbody));
+        WorldPlanetsLen = WorldPlanets.CalculateLength();
+        PlanetsRigidbody = WorldPlanets.ToComponentArray<Rigidbody>();
         //protect errors
-        if (group.Length < 1) return;
+        if (WorldPlanetsLen < 1) return;
         //data array creatation
-        Planet[] dataArr = new Planet[group.Length];
-        for (int i = 0; i < group.Length; i++)
+        Planet[] dataArr = new Planet[WorldPlanetsLen];
+        for (int i = 0; i < WorldPlanetsLen; i++)
         {
-            dataArr[i].Pos = group.rig[i].position;
-            dataArr[i].mass = group.rig[i].mass * group.rig[i].transform.localScale.x;
+            dataArr[i].Pos = PlanetsRigidbody[i].position;
+            dataArr[i].mass = PlanetsRigidbody[i].mass * PlanetsRigidbody[i].transform.localScale.x;
         }
 
         var data = new NativeArray<Planet>(dataArr, Allocator.Persistent);
-        var results = new NativeArray<Vector3>(group.Length * group.Length, Allocator.Persistent);
+        var results = new NativeArray<Vector3>(WorldPlanetsLen * WorldPlanetsLen, Allocator.Persistent);
         //create job
         var myjob = new ForceCalcJob()
         {
@@ -32,7 +36,7 @@ public class GravitySystem : ComponentSystem
             gravity = gravity,
             force2DResults = results
         };
-        jobhandle = myjob.Schedule(group.Length, 64);
+        jobhandle = myjob.Schedule(WorldPlanetsLen, 64);
 
 
 
@@ -41,7 +45,7 @@ public class GravitySystem : ComponentSystem
         data.Dispose();
         //add forces from result
         for (int i = 0; i < results.Length; i++)
-            group.rig[i % group.Length].AddForce(results[i], ForceMode.Acceleration);
+            PlanetsRigidbody[i % WorldPlanetsLen].AddForce(results[i], ForceMode.Acceleration);
         results.Dispose();
     }
     public struct Planet
@@ -74,6 +78,5 @@ public class GravitySystem : ComponentSystem
 }
 public struct WorldPlanetGroup
 {
-    public ComponentArray<Rigidbody> rig;
-    public readonly int Length;
+    public Rigidbody rig;
 }
