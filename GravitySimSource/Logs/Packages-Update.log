@@ -42,3 +42,21 @@ The following packages were added:
   com.unity.modules.vr@1.0.0
   com.unity.modules.wind@1.0.0
   com.unity.modules.xr@1.0.0
+
+=== Wed Jun  5 18:58:01 2019
+
+Packages were changed.
+Update Mode: updateDependencies
+
+The following packages were added:
+  com.unity.2d.tilemap@1.0.0
+  com.unity.ext.nunit@1.0.0
+  com.unity.test-framework@1.0.13
+  com.unity.2d.sprite@1.0.0
+  com.unity.ide.vscode@1.0.4
+  com.unity.ide.visualstudio@1.0.10
+  com.unity.ide.rider@1.0.4
+  com.unity.ugui@1.0.0
+  com.unity.modules.androidjni@1.0.0
+The following packages were updated:
+  com.unity.package-manager-ui from version 2.1.2 to 2.2.0
