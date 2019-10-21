@@ -1,5 +1,5 @@
 # HEcsGravitySim
-###gravity simulation by ECS and job system at unity.
+###### gravity simulation by ECS and job system at unity.
 
 In this simple project, we calculated the force of each of the planets on all other planets, each frame.
 
@@ -11,7 +11,7 @@ to fix this problem we need CPU multi-threading. Data-Oriented Programming and U
 
 at this example, we used Unity, JobSystem(multi-threading system), ECS Architecture (Data-oriented programming), Hybrid Renderer Package (Fast rendering Approach) and UnityPhysics package(Havok Physics at this case).
 
-##Documentation:
+## Documentation:
 at this simple project, we have Job structure, Gravity System Class, Planet Component Data and Random Generator Class.
 Random Generator Class, generating planets at random positions.
 
