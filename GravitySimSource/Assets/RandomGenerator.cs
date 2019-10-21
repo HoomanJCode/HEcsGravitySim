@@ -1,29 +1,39 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Unity.Entities;
+using Unity.Physics;
+using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class RandomGenerator : MonoBehaviour
 {
-    [SerializeField]
-    private Vector2 x = Vector2.one, y = Vector2.one, z = Vector2.one, scale = Vector2.one, mass = Vector2.one;
-    [SerializeField]
-    private int HowMany = 100;
-    [SerializeField]
-    private GameObject prefab=null;
-    private Transform temp;
-    private float tempScale;
-    // Start is called before the first frame update
-    void Start()
-    {
-        for (int i = 0; i < HowMany; i++)
-        {
+    [FormerlySerializedAs("HowMany")] [SerializeField]
+    private int howMany = 100;
 
-            temp = Instantiate(prefab, new Vector3(Random.Range(x.x, x.y)
-                                        , Random.Range(y.x, y.y)
-                                        , Random.Range(z.x, z.y)), prefab.transform.rotation).transform;
-            tempScale = Random.Range(scale.x, scale.y);
-            temp.localScale = new Vector3(tempScale, tempScale, tempScale);
-            temp.GetComponent<Rigidbody>().mass = Random.Range(mass.x, mass.y);
+    [SerializeField] private GameObject prefab;
+
+    [SerializeField] private Vector2 x = Vector2.one, y = Vector2.one, z = Vector2.one, mass = Vector2.one;
+
+    private Entity entity;
+
+    // Start is called before the first frame update
+    private void Start()
+    {
+        var ePrefab = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
+        var entityManager = World.Active.GetOrCreateSystem<BeginSimulationEntityCommandBufferSystem>()
+            .CreateCommandBuffer();
+        for (var i = 0; i < howMany; i++)
+        {
+            entity = entityManager.Instantiate(ePrefab);
+            entityManager.SetComponent(entity, new Translation
+            {
+                Value =
+                {
+                    x = Random.Range(x.x, x.y),
+                    y = Random.Range(y.x, y.y),
+                    z = Random.Range(z.x, z.y)
+                }
+            });
+            entityManager.AddComponent(entity, new PlanetData() {Mass = Random.Range(mass.x, mass.y)});
         }
     }
 }

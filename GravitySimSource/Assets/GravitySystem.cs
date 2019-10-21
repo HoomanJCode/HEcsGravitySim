@@ -1,82 +1,61 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Burst;
-using Unity.Collections;
-public class GravitySystem : ComponentSystem
+using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Transforms;
+using UnityEngine;
+
+public class GravitySystem : JobComponentSystem
 {
-    public const float gravity = 1;
-    JobHandle jobhandle;
-    EntityQuery WorldPlanets;
-    int WorldPlanetsLen;
-    Rigidbody[] PlanetsRigidbody;
-    protected override void OnUpdate()
+    private ForceCalcJob job;
+    private JobHandle jobHandle;
+    private EntityQuery worldPlanets;
+
+    protected override void OnCreate()
     {
-        WorldPlanets =GetEntityQuery(typeof(Rigidbody));
-        WorldPlanetsLen = WorldPlanets.CalculateLength();
-        PlanetsRigidbody = WorldPlanets.ToComponentArray<Rigidbody>();
-        //protect errors
-        if (WorldPlanetsLen < 1) return;
-        //data array creatation
-        Planet[] dataArr = new Planet[WorldPlanetsLen];
-        for (int i = 0; i < WorldPlanetsLen; i++)
-        {
-            dataArr[i].Pos = PlanetsRigidbody[i].position;
-            dataArr[i].mass = PlanetsRigidbody[i].mass * PlanetsRigidbody[i].transform.localScale.x;
-        }
-
-        var data = new NativeArray<Planet>(dataArr, Allocator.Persistent);
-        var results = new NativeArray<Vector3>(WorldPlanetsLen * WorldPlanetsLen, Allocator.Persistent);
-        //create job
-        var myjob = new ForceCalcJob()
-        {
-            data = data,
-            gravity = gravity,
-            force2DResults = results
-        };
-        jobhandle = myjob.Schedule(WorldPlanetsLen, 64);
-
-
-
-        //wait to complete last job
-        jobhandle.Complete();
-        data.Dispose();
-        //add forces from result
-        for (int i = 0; i < results.Length; i++)
-            PlanetsRigidbody[i % WorldPlanetsLen].AddForce(results[i], ForceMode.Acceleration);
-        results.Dispose();
+        worldPlanets = GetEntityQuery(
+            ComponentType.ReadOnly<PlanetData>(),
+            ComponentType.ReadOnly<Translation>(),
+            ComponentType.ReadWrite<PhysicsVelocity>()
+        );
     }
-    public struct Planet
+
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
     {
-        public Vector3 Pos;
-        public float mass;
+        job.PlanetsTranslation = worldPlanets.ToComponentDataArray<Translation>(Allocator.TempJob);
+        job.PlanetsMasses = worldPlanets.ToComponentDataArray<PlanetData>(Allocator.TempJob);
+        jobHandle = job.Schedule(worldPlanets, inputDeps);
+        jobHandle = job.PlanetsTranslation.Dispose(jobHandle);
+        jobHandle = job.PlanetsMasses.Dispose(jobHandle);
+        return jobHandle;
     }
+
     [BurstCompile]
-    public struct ForceCalcJob : IJobParallelFor
+    private struct ForceCalcJob : IJobForEach<PlanetData, Translation, PhysicsVelocity>
     {
-        [ReadOnly]
-        public NativeArray<Planet> data;
-        [ReadOnly]
-        public float gravity;
-        [WriteOnly]
-        [NativeDisableParallelForRestriction]
-        public NativeArray<Vector3> force2DResults;
-        public void Execute(int index)
+        private const float Gravity = 1f;
+        [ReadOnly] public NativeArray<Translation> PlanetsTranslation;
+        [ReadOnly] public NativeArray<PlanetData> PlanetsMasses;
+
+        private static float3 GetForce(Vector3 myPosition, float myMass, Vector3 targetPosition, float targetMass)
         {
-            for (int i = 0; i < data.Length; i++)
-                force2DResults[index * data.Length + i] = (i == index) ? Vector3.zero : GetForce(index, i);
+            var direction = targetPosition-myPosition;
+            var distance = direction.magnitude;
+            // ReSharper disable once CompareOfFloatsByEqualityOperator
+            if (distance == 0) return float3.zero;
+            return direction.normalized * (Gravity * (myMass * targetMass) / Mathf.Pow(distance, 2));
         }
-        private Vector3 direction;
-        public Vector3 GetForce(int Object_A_Index, int Object_B_Index)
+
+        public void Execute([ReadOnly] ref PlanetData planetData, [ReadOnly] ref Translation translation,
+            ref PhysicsVelocity physicsVelocity)
         {
-            direction = data[Object_A_Index].Pos - data[Object_B_Index].Pos;
-            return direction.normalized * (gravity * (data[Object_A_Index].mass * data[Object_B_Index].mass) / Mathf.Pow(direction.magnitude, 2));
+            for (var i = 0; i < PlanetsTranslation.Length; i++)
+            {
+                physicsVelocity.Linear += GetForce(translation.Value, planetData.Mass,
+                    PlanetsTranslation[i].Value, PlanetsMasses[i].Mass);
+            }
         }
     }
-}
-public struct WorldPlanetGroup
-{
-    public Rigidbody rig;
 }
