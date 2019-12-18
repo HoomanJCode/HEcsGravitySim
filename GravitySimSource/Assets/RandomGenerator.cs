@@ -10,7 +10,8 @@ public class RandomGenerator : MonoBehaviour
     [FormerlySerializedAs("HowMany")] [SerializeField]
     private int howMany = 100;
 
-    [SerializeField] private GameObject prefab;
+    // ReSharper disable once RedundantDefaultMemberInitializer
+    [SerializeField] private GameObject prefab = null;
 
     [SerializeField] private Vector2 x = Vector2.one, y = Vector2.one, z = Vector2.one, mass = Vector2.one;
 
