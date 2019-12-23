@@ -18,13 +18,12 @@ public class RandomGenerator : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
-        var ePrefab = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab, World.Active);
-        var entityManager = World.Active.GetOrCreateSystem<BeginSimulationEntityCommandBufferSystem>()
-            .CreateCommandBuffer();
+        var ePrefab = GameObjectConversionUtility.ConvertGameObjectHierarchy(prefab,GameObjectConversionSettings.FromWorld(World.DefaultGameObjectInjectionWorld,new BlobAssetStore()));
+        var entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
         for (var i = 0; i < howMany; i++)
         {
             entity = entityManager.Instantiate(ePrefab);
-            entityManager.SetComponent(entity, new Translation
+            entityManager.SetComponentData(entity, new Translation
             {
                 Value =
                 {
@@ -33,7 +32,7 @@ public class RandomGenerator : MonoBehaviour
                     z = Random.Range(z.x, z.y)
                 }
             });
-            entityManager.AddComponent(entity, new PlanetData {Mass = Random.Range(mass.x, mass.y)});
+            entityManager.AddComponentData(entity, new PlanetData {Mass = Random.Range(mass.x, mass.y)});
         }
     }
 }
