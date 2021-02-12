@@ -8,6 +8,7 @@ So we have two big nested loops over 1000 planets and we can not process all of 
 to fix this problem we need CPU multi-threading. Data-Oriented Programming and Unity3d can help us!
 
 [Rendered Video](https://www.aparat.com/v/GpcBv)
+![Example](https://github.com/HoomanJCode/HEcsGravitySim/blob/master/Docs/Capture.PNG?raw=true)
 
 at this example, we used Unity, JobSystem(multi-threading system), ECS Architecture (Data-oriented programming), Hybrid Renderer Package (Fast rendering Approach) and UnityPhysics package(Havok Physics at this case).
 
